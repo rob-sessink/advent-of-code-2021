@@ -1,31 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <AssemblyName>sonarsweep</AssemblyName>
+        <GenerateProgramFile>false</GenerateProgramFile>
         <OutputType>Exe</OutputType>
         <TargetFramework>net5.0</TargetFramework>
         <WarnOn>3390;$(WarnOn)</WarnOn>
-        <GenerateProgramFile>false</GenerateProgramFile>
-        <AssemblyName>sonarsweep</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="SonarSweep.fs" />
-        <Compile Include="SonarSweepTests.fs" />
-        <Compile Include="Main.fs" />
-        <Content Include="report-test.txt">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="report.txt" CopyToOutputDirectory="PreserveNewest" />
+        <Compile Include="SonarSweep.fs"/>
+        <Compile Include="SonarSweepTests.fs"/>
+        <Compile Include="Main.fs"/>
+        <Content Include="report.txt" CopyToOutputDirectory="PreserveNewest"/>
+        <Content Include="report-test.txt" CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
-        <PackageReference Include="xunit" Version="2.4.1" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4"/>
+        <PackageReference Include="xunit" Version="2.4.1"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="FsUnit.xUnit" Version="4.0.4" />
+        <PackageReference Include="FsUnit.xUnit" Version="4.0.4"/>
         <PackageReference Include="coverlet.collector" Version="3.0.2">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
