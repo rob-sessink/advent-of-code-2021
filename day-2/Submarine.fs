@@ -16,15 +16,17 @@ type Instruction =
 
 type Position =
     { Horizontal: int
-      Depth: int }
+      Depth: int
+      Aim: int }
 
     member this.ChangeFor(ins: Instruction) =
         match ins with
         | Forward p ->
             { this with
-                  Horizontal = this.Horizontal + p }
-        | Down p -> { this with Depth = this.Depth + p }
-        | Up p -> { this with Depth = this.Depth - p }
+                  Horizontal = this.Horizontal + p
+                  Depth = this.Depth + (this.Aim * p) }
+        | Down p -> { this with Aim = this.Aim + p }
+        | Up p -> { this with Aim = this.Aim - p }
 
     member this.Coord() = this.Horizontal * this.Depth
 
@@ -41,7 +43,7 @@ let toCourse lines = lines |> List.map asInstruction
 let toList file = File.ReadLines file |> Seq.toList
 
 let navigate file =
-    let startPosition = { Horizontal = 0; Depth = 0 }
+    let startPosition = { Horizontal = 0; Depth = 0; Aim = 0 }
 
     let endPosition =
         toList file |> toCourse |> execute startPosition
