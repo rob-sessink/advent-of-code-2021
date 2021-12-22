@@ -24,11 +24,13 @@ type Number =
 let initializer (ci: int [] []) x y = Number(ci.[x].[y], false)
 
 type BingoCard =
-    { Size: int
+    { Identifier: int
+      Size: int
       mutable Card: Number [,] }
 
-    static member Create(size, arr) =
-        { Size = size - 1
+    static member Create(id, size, arr) =
+        { Identifier = id
+          Size = size - 1
           Card = Array2D.init size size (initializer arr) }
 
     member private this.isBingoForSlice(slice: Number array) =
@@ -90,14 +92,14 @@ let hasBingo number (cards: BingoCard list) =
 
     match winners with
     | [] -> None
-    | _ -> Some winners.Head
+    | _ -> Some winners
 
 let readDrawnNumbers (lines: (int * string) []) =
     lines
     |> Array.take 1
     |> Array.collect (fun (_, s) -> s.Split(",") |> Array.map Int32.Parse)
 
-let createBingoCard (chunk: (int * string) []) =
+let createBingoCard id (chunk: (int * string) []) =
     let arr =
         chunk
         |> Array.map
@@ -106,28 +108,55 @@ let createBingoCard (chunk: (int * string) []) =
                 |> Array.filter (fun s -> s <> "")
                 |> Array.map Int32.Parse)
 
-    BingoCard.Create(5, arr)
+    BingoCard.Create(id, 5, arr)
 
 let readBingoCards (lines: (int * string) []) =
     lines
     |> Array.skip 1
     |> Array.filter (fun (_, s) -> s <> "")
     |> Array.chunkBySize 5
-    |> Array.map createBingoCard
+    |> Array.mapi createBingoCard
     |> Array.toList
 
 let drawUntilWinner numbers cards =
-    Array.tryPick (fun num -> hasBingo num cards) numbers
+    let first =
+        Array.tryPick (fun num -> hasBingo num cards) numbers
 
-let play file =
+    match first with
+    | None -> 0
+    | Some x -> snd x.Head
+
+let drawLastWinner numbers cards =
+    let nonWinners winners cards =
+        cards
+        |> List.filter
+            (fun c ->
+                winners
+                |> List.forall (fun (winner, _) -> winner.Identifier <> c.Identifier))
+
+    let rec drawUntilLastWinner numbers cards =
+        match numbers with
+        | [] -> None
+        | n :: ns ->
+            let winners = hasBingo n cards
+
+            match winners with
+            | Some w when cards.Length = 1 -> Some w
+            | Some w when cards.Length > 1 -> drawUntilLastWinner ns (nonWinners w cards)
+            | _ -> drawUntilLastWinner ns cards
+
+    let last =
+        drawUntilLastWinner (Array.toList numbers) cards
+
+    match last with
+    | None -> 0
+    | Some x -> snd x.Head
+
+let play func file =
     let lines =
         File.ReadAllLines file
         |> Array.mapi (fun i line -> (i, line))
 
     let numbers = readDrawnNumbers lines
     let cards = readBingoCards lines
-    let firstWinner = drawUntilWinner numbers cards
-
-    match firstWinner with
-    | None -> 0
-    | Some x -> snd x
+    func numbers cards

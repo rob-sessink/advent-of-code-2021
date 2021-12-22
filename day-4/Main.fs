@@ -12,5 +12,5 @@ let main args =
         usage ()
     else
         let file = args.[0]
-        let points = play file
+        let points = play drawUntilWinner file
         points
