@@ -3,28 +3,29 @@ module Segments
 open System
 open System.IO
 
-type Digit =
-    { Segments: string
-      Digit: int option }
+type Digit = { Segments: string; Digit: int option }
 
-    static member Create(s) = { Segments = s; Digit = None }
+let private create' s = { Segments = s; Digit = None }
 
-    static member Create(s, d) = { Segments = s; Digit = Some d }
+let create s d = { Segments = s; Digit = Some d }
 
-    member private this.FromChar(s: char seq) = s |> String.Concat |> Digit.Create
+let fromChar (s: char seq) = (s |> String.Concat) |> create'
 
-    member this.Combine(p: string) =
-        this.Segments + p |> Seq.distinct |> this.FromChar
+let combine (d: Digit) (p: Digit) =
+    d.Segments + p.Segments
+    |> Seq.distinct
+    |> fromChar
 
-    member this.Remove(d: Digit) =
-        this.Segments
-        |> Seq.filter (fun c -> not (d.Segments.Contains(c)))
-        |> this.FromChar
+let remove (t: Digit) (d: Digit) =
+    t.Segments
+    |> Seq.filter (fun c -> not (d.Segments.Contains(c)))
+    |> fromChar
 
-    member this.Remove(s: string) =
-        this.Segments
-        |> Seq.filter (fun c -> not (s.Contains(c)))
-        |> this.FromChar
+let toInt (s: string) = Int32.Parse s
+
+let concat s (d: Digit) =
+    s
+    + (d.Digit |> Option.fold (fun _ v -> v |> string) "")
 
 let (|Length|_|) (l: int) (signal: string) =
     if signal.Length = l then
@@ -61,7 +62,7 @@ let (|Equal|_|) (d: Digit option) (signal: string) =
 let (|EqualWhenAdded|_|) (additive: Digit option) (d: Digit option) (signal: string) =
     let com =
         additive
-        |> Option.map (fun x -> x.Combine(signal))
+        |> Option.map (fun x -> combine x (create' signal))
 
     let isEqual segment d =
         match segment with
@@ -84,52 +85,52 @@ let findDigit mf signals =
 
 let (|One|_|) (signal: string) =
     match signal with
-    | s when s.Length = 2 -> Some(Digit.Create(s, 1))
+    | s when s.Length = 2 -> Some(create s 1)
     | _ -> None
 
 let (|Two|_|) (four: Digit option) (eight: Digit option) (signal: string) =
     match signal with
-    | Length 5 _ & EqualWhenAdded four eight s -> Some(Digit.Create(s, 2))
+    | Length 5 _ & EqualWhenAdded four eight s -> Some(create s 2)
     | _ -> None
 
 let (|Three|_|) (one: Digit option) (signal: string) =
     match signal with
-    | Length 5 _ & Inclusive one s -> Some(Digit.Create(s, 3))
+    | Length 5 _ & Inclusive one s -> Some(create s 3)
     | _ -> None
 
 let (|Four|_|) (signal: string) =
     match signal with
-    | s when s.Length = 4 -> Some(Digit.Create(s, 4))
+    | s when s.Length = 4 -> Some(create s 4)
     | _ -> None
 
 let (|Five|_|) (nine: Digit option) (one: Digit option) (signal: string) =
     match signal with
-    | Length 5 _ & EqualWhenAdded nine one s -> Some(Digit.Create(s, 5))
+    | Length 5 _ & EqualWhenAdded nine one s -> Some(create s 5)
     | _ -> None
 
 let (|Six|_|) (one: Digit option) (signal: string) =
     match signal with
-    | Length 6 _ & NonInclusive one s -> Some(Digit.Create(s, 6))
+    | Length 6 _ & NonInclusive one s -> Some(create s 6)
     | _ -> None
 
 let (|Seven|_|) (signal: string) =
     match signal with
-    | s when s.Length = 3 -> Some(Digit.Create(s, 7))
+    | s when s.Length = 3 -> Some(create s 7)
     | _ -> None
 
 let (|Eight|_|) (signal: string) =
     match signal with
-    | s when s.Length = 7 -> Some(Digit.Create(s, 8))
+    | s when s.Length = 7 -> Some(create s 8)
     | _ -> None
 
 let (|Nine|_|) (four: Digit option) (signal: string) =
     match signal with
-    | Length 6 _ & Inclusive four s -> Some(Digit.Create(s, 9))
+    | Length 6 _ & Inclusive four s -> Some(create s 9)
     | _ -> None
 
 let (|Zero|_|) (six: Digit option) (nine: Digit option) (signal: string) =
     match signal with
-    | Length 6 _ & NonInclusive six _ & NonInclusive nine s -> Some(Digit.Create(s, 0))
+    | Length 6 _ & NonInclusive six _ & NonInclusive nine s -> Some(create s 0)
     | _ -> None
 
 /// Deduction rules for segments and numbers
@@ -199,10 +200,7 @@ let deductUnique inputs =
     |> Array.length
 
 let deductAll inputs =
-    let combineAsNumber digits =
-        digits
-        |> Array.fold (fun s (j: Digit) -> s + string j.Digit.Value) ""
-        |> Int32.Parse
+    let combineAsNumber digits = digits |> Array.fold concat "" |> toInt
 
     inputs
     |> Array.map
